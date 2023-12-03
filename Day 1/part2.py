@@ -27,8 +27,8 @@ with open("input.txt", "r") as f:
 answer: int = 0
 
 for line in lines:
-    left_positions: Dict[str, int] = dict()
-    right_positions: Dict[str, int] = dict()
+    left_positions: Dict[int, str] = dict()
+    right_positions: Dict[int, str] = dict()
     for string in string_to_number:
         if (index := line.find(string)) > -1:
             left_positions[index] = string
