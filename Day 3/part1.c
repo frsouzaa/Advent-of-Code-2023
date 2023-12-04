@@ -81,9 +81,14 @@ void print_matrix(char **matrix, int lines, int columns)
     }
 }
 
+int is_number(char **matrix, int i, int j)
+{
+    return matrix[i][j] >= 48 && matrix[i][j] <= 57;
+}
+
 int is_char(char **matrix, int i, int j)
 {
-    return !((matrix[i][j] >= 48 && matrix[i][j] <= 57) || matrix[i][j] == 46);
+    return !(is_number(matrix, i, j) || matrix[i][j] == 46);
 }
 
 int int_pow(int base, int exp)
@@ -107,7 +112,7 @@ int main()
     int columns = count_columns(file);
 
     char **data = read_data(file, lines, columns);
-    
+
     fclose(file);
 
     int total_sum = 0;
@@ -115,29 +120,25 @@ int main()
     for (int i = 0; i < lines; i++)
         for (int j = 0; j < columns; j++)
         {
-            if (!(data[i][j] >= 48 && data[i][j] <= 57))
+            if (!is_number(data, i, j))
                 continue;
-            if ((
-                    (i > 0 && j > 0 && is_char(data, i - 1, j - 1)) ||
-                    (i > 0 && is_char(data, i - 1, j)) ||
-                    (i > 0 && j < columns - 1 && is_char(data, i - 1, j + 1)) ||
-                    (j > 0 && is_char(data, i, j - 1)) ||
-                    (j < columns - 1 && is_char(data, i, j + 1)) ||
-                    (i < lines - 1 && j > 0 && is_char(data, i + 1, j - 1)) ||
-                    (i < lines - 1 && is_char(data, i + 1, j)) ||
-                    (i < lines - 1 && j < columns - 1 && is_char(data, i + 1, j + 1))) &&
-                (data[i][j] >= 48 && data[i][j] <= 57))
+            if (
+                (i > 0 && j > 0 && is_char(data, i - 1, j - 1)) ||
+                (i > 0 && is_char(data, i - 1, j)) ||
+                (i > 0 && j < columns - 1 && is_char(data, i - 1, j + 1)) ||
+                (j > 0 && is_char(data, i, j - 1)) ||
+                (j < columns - 1 && is_char(data, i, j + 1)) ||
+                (i < lines - 1 && j > 0 && is_char(data, i + 1, j - 1)) ||
+                (i < lines - 1 && is_char(data, i + 1, j)) ||
+                (i < lines - 1 && j < columns - 1 && is_char(data, i + 1, j + 1)))
             {
-
-                int sum = 0, pot = 0, k = j;
-                while (k < columns - 1 && (data[i][k + 1] >= 48 && data[i][k + 1] <= 57))
+                int sum = 0, k = j;
+                while (k < columns - 1 && is_number(data, i, k + 1))
                     k++;
-                while (k >= 0 && (data[i][k] >= 48 && data[i][k] <= 57))
+                for (int pot = 0, l = k; k >= 0 && is_number(data, i, l); pot++, l--)
                 {
-                    sum += (data[i][k] - 48) * int_pow(10, pot);
-                    data[i][k] = '.';
-                    pot++;
-                    k--;
+                    sum += (data[i][l] - 48) * int_pow(10, pot);
+                    data[i][l] = '.';
                 }
                 total_sum += sum;
             }
