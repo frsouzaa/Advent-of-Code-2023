@@ -1,47 +1,63 @@
-from typing import List
+from typing import List, Tuple
 import re
 
 
-def check_if_exists(seed: int, seeds: List[str]) -> bool:
-    for i in range(0, len(seeds), 2):
-        if int(seeds[i]) <= seed < int(seeds[i]) + int(seeds[i + 1]):
-            return True
-    return False
+def get_seeds(content: str) -> List[List[int]]:
+    aux: List[int] = [int(i) for i in re.findall("seeds:\s[\d\s]+", content)[0].replace("seeds: ", "").replace("\n", "").split(" ")]
+    seeds: List[List[int]] = []
+    for i in range(0, len(aux), 2):
+        seeds.append([aux[i], aux[i] + aux[i + 1] - 1, 0])
+    return seeds
 
 
-def get_lowest(seeds: List[str], stages: List[List[str]]) -> int:
-    lowest = 0
-    for i in range(0, len(seeds), 2):
-        print(i)
-        for j in range(int(seeds[i + 1])):
-            seed = int(seeds[i]) + int(j)
-            if check_if_exists(seed, seeds[:i]):
-                continue
-            for stage in stages:
-                for m in stage:
-                    if m[1] <= seed < m[3]:
-                        seed = m[4] + seed
-                        break
-            if seed < lowest or (i == 0 and j == 0):
-                print(f"menor: {seed}")
-                lowest = seed
+def get_stages(content: str) -> List[List[int]]:
+    stages: List[List[int]] = []
+    for stage in re.findall("map:\s[\d\s]+", content):
+        stage = stage.replace("map:", "").strip()
+        stages.append([[int(j) for j in i] for i in [s.split(" ") for s in stage.split("\n")]])
+    return stages
+
+
+def get_lowest(seeds: List[Tuple[int]], stages: List[List[int]]) -> int:
+    lowest: float = float("inf")
+    while seeds:
+        seed = seeds.pop()
+        while seed[2] < 8:
+            if seed[2] == 7:
+                if seed[0] < lowest:
+                    lowest = seed[0]
+                break
+            for s in stages[seed[2]]:
+                dest, source, length = s
+                diff = dest - source
+                if source > seed[1] or source + length - 1 < seed[0]:
+                    continue
+                if source <= seed[0] and source + length > seed[1]:
+                    seed[0] += diff
+                    seed[1] += diff
+                    break
+                if seed[0] >= source and seed[0] <= source + length - 1:
+                    aux: List[int] = [source + length, seed[1], seed[2]]
+                    seeds.append(aux)
+                    seed[0] += diff
+                    seed[1] = dest + length - 1
+                    break
+                if seed[1] >= source and seed[1] <= source + length - 1:
+                    aux: List[int] = [seed[0], source - 1, seed[2]]
+                    seeds.append(aux)
+                    seed[0] = dest
+                    seed[1] += diff
+                    break
+            seed[2] += 1
     return lowest
 
 
-with open('Day 5/input.txt') as f:
+with open('input.txt') as f:
     content: str = f.read()
 
-seeds: List[str] = re.findall("seeds:\s[\d\s]+", content)[0].replace("seeds: ", "").replace("\n", "").split(" ")
+seeds: List[List[int]] = get_seeds(content)
 
-stages: List[List[str]] = []
-
-for stage in re.findall("map:\s[\d\s]+", content):
-    stage = stage.replace("map:", "").strip()
-    m = [[int(j) for j in i] for i in [s.split(" ") for s in stage.split("\n")]]
-    for i in range(len(m)):
-        m[i].append(m[i][1] + m[i][2])
-        m[i].append(m[i][0] - m[i][1])
-    stages.append(m)
+stages: List[List[int]] = get_stages(content)
 
 lowest: int = get_lowest(seeds, stages)
 
